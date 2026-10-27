@@ -43,6 +43,6 @@ docker compose up -d
   - **Contraseña:** `admin`
 
 
-- **pgAdmin Web (Acceso: https://localhost:5050):**
+- **pgAdmin Web (Acceso: http://localhost:5050):**
   - **Email:** `admin@embobinados.com`
   - **Contraseña:** `admin`
