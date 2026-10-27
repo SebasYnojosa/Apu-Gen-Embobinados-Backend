@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # 1. Contenedor de la Base de Datos
+  db:
+    image: postgres:16-alpine
+    container_name: embobinados-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: embobinados_apu
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Esto guarda tus datos permanentemente
+
+  # 2. Contenedor del Visualizador Web (pgAdmin)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: embobinados-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@embobinados.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80" # El visualizador estará en el puerto 5050
+    depends_on:
+      - db # Espera a que la BD inicie primero
+
+volumes:
+  postgres_data: # Define el volumen para persistencia de datos
