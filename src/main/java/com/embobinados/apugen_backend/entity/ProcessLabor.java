@@ -13,7 +13,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class ProcessLabor {
     @Id
-    private Long id; // ID Manual
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "process_service_request", nullable = false)
