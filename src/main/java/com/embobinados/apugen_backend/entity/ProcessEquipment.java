@@ -1,5 +1,6 @@
 package com.embobinados.apugen_backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,6 +19,7 @@ public class ProcessEquipment {
 
     @ManyToOne
     @JoinColumn(name = "process_service_request", nullable = false)
+    @JsonIgnore // Para que no salga toda la informacion del proceso en las responses
     private Process process;
 
     // Referencia al catálogo maestro

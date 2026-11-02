@@ -1,5 +1,6 @@
 package com.embobinados.apugen_backend.service;
 
+import com.embobinados.apugen_backend.dto.ApuResponseDTO;
 import com.embobinados.apugen_backend.entity.*;
 import com.embobinados.apugen_backend.entity.Process;
 import com.embobinados.apugen_backend.repository.*;
@@ -134,5 +135,53 @@ public class ApuService {
         processLaborRepository.saveAll(labors);
 
         return savedProcess;
+    }
+
+    @Transactional
+    public void deleteApu(String serviceRequest) {
+        // 1. Verificar que exista
+        if (!processRepository.existsById(serviceRequest)) {
+            throw new RuntimeException("No se puede eliminar: No se encontró ningún APU con la solicitud " + serviceRequest);
+        }
+
+        // 2. Borrar los detalles (Snapshots) primero para liberar las llaves foráneas
+        processMaterialRepository.deleteAll(processMaterialRepository.findByProcessServiceRequest(serviceRequest));
+        processEquipmentRepository.deleteAll(processEquipmentRepository.findByProcessServiceRequest(serviceRequest));
+        processLaborRepository.deleteAll(processLaborRepository.findByProcessServiceRequest(serviceRequest));
+
+        // 3. Borrar la cabecera del proceso
+        processRepository.deleteById(serviceRequest);
+    }
+
+    public ApuResponseDTO getApuByServiceRequest(String serviceRequest) {
+        // 1. Buscar la cabecera principal
+        Process process = processRepository.findById(serviceRequest)
+                .orElseThrow(() -> new RuntimeException("No se encontró ningún APU con la solicitud: " + serviceRequest));
+
+        // 2. Buscar las 3 listas usando los métodos que acabamos de crear
+        List<ProcessMaterial> materials = processMaterialRepository.findByProcessServiceRequest(serviceRequest);
+        List<ProcessEquipment> equipments = processEquipmentRepository.findByProcessServiceRequest(serviceRequest);
+        List<ProcessLabor> labors = processLaborRepository.findByProcessServiceRequest(serviceRequest);
+
+        // 3. Empaquetar la informacion en el DTO y devolverlo
+        return new ApuResponseDTO(process, materials, equipments, labors);
+    }
+
+    public List<Process> getAllApus() {
+        // findAll() busca todas las cabeceras de la tabla 'processes'
+        return processRepository.findAll();
+    }
+
+    public List<Process> searchApus(Long companyId, String companyName, String processType, String power, String serial, String brand, boolean exactMatch) {
+
+        // Limpiamos strings vacíos para evitar falsos positivos en el IS NULL
+        companyName = (companyName != null && !companyName.trim().isEmpty()) ? companyName : null;
+        processType = (processType != null && !processType.trim().isEmpty()) ? processType : null;
+        power = (power != null && !power.trim().isEmpty()) ? power : null;
+        serial = (serial != null && !serial.trim().isEmpty()) ? serial : null;
+        brand = (brand != null && !brand.trim().isEmpty()) ? brand : null;
+
+        // Si no consigue nada, Spring Data JPA devuelve [] automáticamente.
+        return processRepository.searchApus(companyId, companyName, processType, power, serial, brand, exactMatch);
     }
 }

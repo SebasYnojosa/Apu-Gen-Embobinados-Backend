@@ -1,6 +1,7 @@
 package com.embobinados.apugen_backend.controllers;
 
 import com.embobinados.apugen_backend.dto.ApuRequestDTO;
+import com.embobinados.apugen_backend.dto.ApuResponseDTO;
 import com.embobinados.apugen_backend.entity.*;
 import com.embobinados.apugen_backend.entity.Process;
 import com.embobinados.apugen_backend.service.ApuService;
@@ -75,5 +76,39 @@ public class ApuController {
 
         // Devolvemos el APU calculado y guardado con un código HTTP 200 (OK)
         return ResponseEntity.ok(savedProcess);
+    }
+
+    @GetMapping("/{serviceRequest}")
+    public ResponseEntity<ApuResponseDTO> obtenerApu(@PathVariable String serviceRequest) {
+        ApuResponseDTO response = apuService.getApuByServiceRequest(serviceRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Process>> listarTodosLosApus() {
+        List<Process> apus = apuService.getAllApus();
+        return ResponseEntity.ok(apus);
+    }
+
+    @GetMapping("/buscar")
+    public ResponseEntity<List<Process>> buscarApus(
+            @RequestParam(required = false) Long companyId,
+            @RequestParam(required = false) String companyName,
+            @RequestParam(required = false) String processType,
+            @RequestParam(required = false) String power,
+            @RequestParam(required = false) String serial,
+            @RequestParam(required = false) String brand,
+            @RequestParam(defaultValue = "false") boolean exactMatch) {
+
+        List<Process> resultados = apuService.searchApus(
+                companyId, companyName, processType, power, serial, brand, exactMatch);
+
+        return ResponseEntity.ok(resultados);
+    }
+
+    @DeleteMapping("/{serviceRequest}")
+    public ResponseEntity<Void> eliminarApu(@org.springframework.web.bind.annotation.PathVariable String serviceRequest) {
+        apuService.deleteApu(serviceRequest);
+        return ResponseEntity.noContent().build();
     }
 }
