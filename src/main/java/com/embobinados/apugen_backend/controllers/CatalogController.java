@@ -35,7 +35,7 @@ public class CatalogController {
     }
 
     // @GetMapping("/empresas/{id}")
-    @GetMapping("/empresas")
+    @GetMapping("/empresas/porId")
     public ResponseEntity<Company> getEmpresa(
             @RequestParam("id") String id
     ) {
@@ -97,7 +97,7 @@ public class CatalogController {
     }
 
     // @GetMapping("/materiales/{id}")
-    @GetMapping("/materiales")
+    @GetMapping("/materiales/porId")
     public ResponseEntity<Material> getMaterial(
             @RequestParam("id") String id
     ) {
@@ -161,7 +161,7 @@ public class CatalogController {
     }
 
     // @GetMapping("/equipos/{id}")
-    @GetMapping("/equipos")
+    @GetMapping("/equipos/porId")
     public ResponseEntity<Equipment> getEquipo(
             @RequestParam("id") String id
     ) {
@@ -224,7 +224,7 @@ public class CatalogController {
     }
 
     // @GetMapping("/cargos/{id}")
-    @GetMapping("/cargos")
+    @GetMapping("/cargos/porId")
     public ResponseEntity<Labor> getCargo(
             @RequestParam("id") String id
     ) {

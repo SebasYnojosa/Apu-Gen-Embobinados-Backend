@@ -78,15 +78,6 @@ public class ApuController {
         return ResponseEntity.ok(savedProcess);
     }
 
-    // @GetMapping("/{serviceRequest}")
-    @GetMapping
-    public ResponseEntity<ApuResponseDTO> obtenerApu(
-            @RequestParam("serviceRequest") String serviceRequest
-    ) {
-        ApuResponseDTO response = apuService.getApuByServiceRequest(serviceRequest);
-        return ResponseEntity.ok(response);
-    }
-
     @GetMapping
     public ResponseEntity<List<Process>> listarTodosLosApus() {
         List<Process> apus = apuService.getAllApus();
