@@ -26,10 +26,55 @@ public class CatalogController {
     private final EquipmentRepository equipmentRepository;
     private final LaborRepository laborRepository;
 
+
+
     @GetMapping("/empresas")
     public ResponseEntity<List<Company>> getCompanies() {
         // findAll() ejecuta un "SELECT * FROM companies" automáticamente
         return ResponseEntity.ok(companyRepository.findAll());
+    }
+
+    @GetMapping("/empresas/{id}")
+    public ResponseEntity<Company> getEmpresa(@PathVariable Long id) {
+        Company empresa = companyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No se encontró la empresa con ID: " + id));
+
+        return ResponseEntity.ok(empresa);
+    }
+
+    @PostMapping("/empresas")
+    public ResponseEntity<Company> crearEmpresa(@RequestBody Company empresa) {
+        // Validación crucial por usar IDs manuales
+        if (empresa.getId() == null) {
+            throw new RuntimeException("El ID de la empresa es obligatorio.");
+        }
+        if (companyRepository.existsById(empresa.getId())) {
+            throw new RuntimeException("Ya existe una empresa registrada con el ID: " + empresa.getId());
+        }
+        return ResponseEntity.ok(companyRepository.save(empresa));
+    }
+
+    @PutMapping("/empresas/{id}")
+    public ResponseEntity<Company> actualizarEmpresa(@PathVariable Long id, @RequestBody Company detalles) {
+        Company empresa = companyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No se encontró la empresa con ID: " + id));
+
+        empresa.setName(detalles.getName());
+
+        return ResponseEntity.ok(companyRepository.save(empresa));
+    }
+
+    @DeleteMapping("/empresas/{id}")
+    public ResponseEntity<Void> borrarEmpresa(@PathVariable Long id) {
+        if (!companyRepository.existsById(id)) {
+            throw new RuntimeException("No se encontró la empresa con ID: " + id);
+        }
+        try {
+            companyRepository.deleteById(id);
+        } catch (Exception e) {
+            throw new RuntimeException("No se puede borrar la empresa porque está siendo usada en un APU.");
+        }
+        return ResponseEntity.noContent().build();
     }
 
     // ==========================================
