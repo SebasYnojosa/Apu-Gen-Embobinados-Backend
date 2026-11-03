@@ -65,7 +65,7 @@ public class ApuService {
             pe.setDepreciationFactorApplied(catEq.getDepreciationFactor()); // Se mantiene con 5 decimales
 
             // costo_uso_diario = valor * factor_depreciacion
-            BigDecimal dailyUseCost = pe.getValueApplied().multiply(pe.getDepreciationFactorApplied().setScale(2, RoundingMode.HALF_UP));
+            BigDecimal dailyUseCost = pe.getValueApplied().multiply(pe.getDepreciationFactorApplied().setScale(6, RoundingMode.HALF_UP));
             pe.setDailyUseCost(dailyUseCost);
             pe.setProcess(process);
 

@@ -34,8 +34,11 @@ public class CatalogController {
         return ResponseEntity.ok(companyRepository.findAll());
     }
 
-    @GetMapping("/empresas/{id}")
-    public ResponseEntity<Company> getEmpresa(@PathVariable Long id) {
+    // @GetMapping("/empresas/{id}")
+    @GetMapping("/empresas")
+    public ResponseEntity<Company> getEmpresa(
+            @RequestParam("id") String id
+    ) {
         Company empresa = companyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("No se encontró la empresa con ID: " + id));
 
@@ -54,8 +57,12 @@ public class CatalogController {
         return ResponseEntity.ok(companyRepository.save(empresa));
     }
 
-    @PutMapping("/empresas/{id}")
-    public ResponseEntity<Company> actualizarEmpresa(@PathVariable Long id, @RequestBody Company detalles) {
+    // @PutMapping("/empresas/{id}")
+    @PutMapping("/empresas")
+    public ResponseEntity<Company> actualizarEmpresa(
+            @RequestParam("id") String id,
+            @RequestBody Company detalles)
+    {
         Company empresa = companyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("No se encontró la empresa con ID: " + id));
 
@@ -64,8 +71,11 @@ public class CatalogController {
         return ResponseEntity.ok(companyRepository.save(empresa));
     }
 
-    @DeleteMapping("/empresas/{id}")
-    public ResponseEntity<Void> borrarEmpresa(@PathVariable Long id) {
+    // @DeleteMapping("/empresas/{id}")
+    @DeleteMapping("/empresas")
+    public ResponseEntity<Void> borrarEmpresa(
+            @RequestParam("id") String id
+    ) {
         if (!companyRepository.existsById(id)) {
             throw new RuntimeException("No se encontró la empresa con ID: " + id);
         }
@@ -86,8 +96,11 @@ public class CatalogController {
         return ResponseEntity.ok(materialRepository.findAll());
     }
 
-    @GetMapping("/materiales/{id}")
-    public ResponseEntity<Material> getMaterial(@PathVariable Long id) {
+    // @GetMapping("/materiales/{id}")
+    @GetMapping("/materiales")
+    public ResponseEntity<Material> getMaterial(
+            @RequestParam("id") String id
+    ) {
         Material material = materialRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("No se encontró el material con ID: " + id));
 
@@ -106,8 +119,12 @@ public class CatalogController {
         return ResponseEntity.ok(materialRepository.save(material));
     }
 
-    @PutMapping("/materiales/{id}")
-    public ResponseEntity<Material> actualizarMaterial(@PathVariable Long id, @RequestBody Material detalles) {
+    // @PutMapping("/materiales/{id}")
+    @PutMapping("/materiales")
+    public ResponseEntity<Material> actualizarMaterial(
+            @RequestParam("id") String id,
+            @RequestBody Material detalles
+    ) {
         Material material = materialRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("No se encontró el material con ID: " + id));
 
@@ -118,8 +135,11 @@ public class CatalogController {
         return ResponseEntity.ok(materialRepository.save(material));
     }
 
-    @DeleteMapping("/materiales/{id}")
-    public ResponseEntity<Void> borrarMaterial(@PathVariable Long id) {
+    // @DeleteMapping("/materiales/{id}")
+    @DeleteMapping("/materiales")
+    public ResponseEntity<Void> borrarMaterial(
+            @RequestParam("id") String id
+    ) {
         if (!materialRepository.existsById(id)) {
             throw new RuntimeException("No se encontró el material con ID: " + id);
         }
@@ -140,8 +160,11 @@ public class CatalogController {
         return ResponseEntity.ok(equipmentRepository.findAll());
     }
 
-    @GetMapping("/equipos/{id}")
-    public ResponseEntity<Equipment> getEquipo(@PathVariable Long id) {
+    // @GetMapping("/equipos/{id}")
+    @GetMapping("/equipos")
+    public ResponseEntity<Equipment> getEquipo(
+            @RequestParam("id") String id
+    ) {
         Equipment equipo = equipmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("No se encontró el equipo con ID: " + id));
 
@@ -160,8 +183,11 @@ public class CatalogController {
         return ResponseEntity.ok(equipmentRepository.save(equipo));
     }
 
-    @PutMapping("/equipos/{id}")
-    public ResponseEntity<Equipment> actualizarEquipo(@PathVariable Long id, @RequestBody Equipment detalles) {
+    // @PutMapping("/equipos/{id}")
+    public ResponseEntity<Equipment> actualizarEquipo(
+            @RequestParam("id") String id,
+            @RequestBody Equipment detalles
+    ) {
         Equipment equipo = equipmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("No se encontró el equipo con ID: " + id));
 
@@ -172,8 +198,11 @@ public class CatalogController {
         return ResponseEntity.ok(equipmentRepository.save(equipo));
     }
 
-    @DeleteMapping("/equipos/{id}")
-    public ResponseEntity<Void> borrarEquipo(@PathVariable Long id) {
+    // @DeleteMapping("/equipos/{id}")
+    @DeleteMapping("/equipos")
+    public ResponseEntity<Void> borrarEquipo(
+            @RequestParam("id") String id
+    ) {
         if (!equipmentRepository.existsById(id)) {
             throw new RuntimeException("No se encontró el equipo con ID: " + id);
         }
@@ -194,8 +223,11 @@ public class CatalogController {
         return ResponseEntity.ok(laborRepository.findAll());
     }
 
-    @GetMapping("/cargos/{id}")
-    public ResponseEntity<Labor> getCargo(@PathVariable Long id) {
+    // @GetMapping("/cargos/{id}")
+    @GetMapping("/cargos")
+    public ResponseEntity<Labor> getCargo(
+            @RequestParam("id") String id
+    ) {
         Labor cargo = laborRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("No se encontró el cargo con ID: " + id));
 
@@ -214,8 +246,12 @@ public class CatalogController {
         return ResponseEntity.ok(laborRepository.save(cargo));
     }
 
-    @PutMapping("/cargos/{id}")
-    public ResponseEntity<Labor> actualizarCargo(@PathVariable Long id, @RequestBody Labor detalles) {
+    // @PutMapping("/cargos/{id}")
+    @PutMapping("/cargos")
+    public ResponseEntity<Labor> actualizarCargo(
+            @RequestParam("id") String id,
+            @RequestBody Labor detalles
+    ) {
         Labor cargo = laborRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("No se encontró el equipo con ID: " + id));
 
@@ -225,8 +261,11 @@ public class CatalogController {
         return ResponseEntity.ok(laborRepository.save(cargo));
     }
 
-    @DeleteMapping("/cargos/{id}")
-    public ResponseEntity<Void> borrarCargo(@PathVariable Long id) {
+    // @DeleteMapping("/cargos/{id}")
+    @DeleteMapping("/cargos")
+    public ResponseEntity<Void> borrarCargo(
+            @RequestParam("id") String id
+    ) {
         if (!laborRepository.existsById(id)) {
             throw new RuntimeException("No se encontró el cargo con ID: " + id);
         }

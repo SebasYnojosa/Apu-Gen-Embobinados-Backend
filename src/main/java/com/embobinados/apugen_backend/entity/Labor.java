@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class Labor {
     @Id
-    private Long id; // ID Manual
+    private String id; // ID Manual
 
     @Column(nullable = false, length = 255)
     private String description; // Ej: "Técnico Embobinador Principal"

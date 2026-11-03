@@ -8,7 +8,7 @@ import java.util.List;
 public class ApuRequestDTO {
     // Cabecera
     private String serviceRequest;
-    private Long companyId;
+    private String companyId;
     private String processType;
     private String power;
     private String serial;
@@ -29,19 +29,19 @@ public class ApuRequestDTO {
     // Clases anidadas para estructurar las listas del JSON
     @Data
     public static class MaterialDTO {
-        private Long materialId;
+        private String materialId;
         private BigDecimal quantity;
     }
 
     @Data
     public static class EquipmentDTO {
-        private Long equipmentId;
+        private String equipmentId;
         private BigDecimal quantity;
     }
 
     @Data
     public static class LaborDTO {
-        private Long laborId;
+        private String laborId;
         private BigDecimal dotation;
     }
 }

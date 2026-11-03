@@ -78,8 +78,11 @@ public class ApuController {
         return ResponseEntity.ok(savedProcess);
     }
 
-    @GetMapping("/{serviceRequest}")
-    public ResponseEntity<ApuResponseDTO> obtenerApu(@PathVariable String serviceRequest) {
+    // @GetMapping("/{serviceRequest}")
+    @GetMapping
+    public ResponseEntity<ApuResponseDTO> obtenerApu(
+            @RequestParam("serviceRequest") String serviceRequest
+    ) {
         ApuResponseDTO response = apuService.getApuByServiceRequest(serviceRequest);
         return ResponseEntity.ok(response);
     }
@@ -106,8 +109,11 @@ public class ApuController {
         return ResponseEntity.ok(resultados);
     }
 
-    @DeleteMapping("/{serviceRequest}")
-    public ResponseEntity<Void> eliminarApu(@org.springframework.web.bind.annotation.PathVariable String serviceRequest) {
+    // @DeleteMapping("/{serviceRequest}")
+    @DeleteMapping
+    public ResponseEntity<Void> eliminarApu(
+            @RequestParam("serviceRequest") String serviceRequest
+    ) {
         apuService.deleteApu(serviceRequest);
         return ResponseEntity.noContent().build();
     }
