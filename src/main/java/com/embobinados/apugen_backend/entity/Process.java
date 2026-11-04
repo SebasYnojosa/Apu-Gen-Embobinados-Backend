@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 @Table(name = "processes")
@@ -13,15 +14,18 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class Process {
     @Id
-    @Column(name = "service_request", length = 50)
+    @Column(name = "service_request", length = 20)
     private String serviceRequest; // ID Manual (Solicitud de Servicio)
 
     @ManyToOne
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 
-    @Column(name = "process_type", nullable = false, length = 100)
-    private String processType;
+    @Column(name = "main_process", nullable = false, length = 100)
+    private String mainProcess;
+
+    @Column(nullable = false, length = 100)
+    private String description;
 
     @Column(length = 50)
     private String power;
@@ -31,6 +35,9 @@ public class Process {
 
     @Column(length = 100)
     private String brand;
+
+    @Column(length = 100)
+    private String location;
 
     // --- VARIABLES DEL APU (Atributos del Proceso) ---
     @Column(name = "item_quantity", precision = 12, scale = 2)
@@ -76,4 +83,14 @@ public class Process {
     // El precio propuesto debe ser entero según la regla
     @Column(name = "proposed_unit_price")
     private Integer proposedUnitPrice;
+
+    // --- RELACIONES EN CASCADA (Solución al TransientPropertyValueException) ---
+    @OneToMany(mappedBy = "process", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProcessMaterial> materials;
+
+    @OneToMany(mappedBy = "process", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProcessEquipment> equipments;
+
+    @OneToMany(mappedBy = "process", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProcessLabor> labors;
 }

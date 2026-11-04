@@ -12,36 +12,24 @@ import java.util.List;
 public interface ProcessRepository extends JpaRepository<Process, String> {
 
     @Query("""
-        SELECT p FROM Process p 
-        WHERE (:companyId IS NULL OR p.company.id = :companyId) 
-          AND (:companyName IS NULL OR (
-                (:exactMatch = true AND normalizar(p.company.name) = normalizar(cast(:companyName as String))) OR 
-                (:exactMatch = false AND normalizar(p.company.name) LIKE concat('%', normalizar(cast(:companyName as String)), '%'))
-              ))
-          AND (:processType IS NULL OR (
-                (:exactMatch = true AND normalizar(p.processType) = normalizar(cast(:processType as String))) OR 
-                (:exactMatch = false AND normalizar(p.processType) LIKE concat('%', normalizar(cast(:processType as String)), '%'))
-              ))
-          AND (:power IS NULL OR (
-                (:exactMatch = true AND normalizar(p.power) = normalizar(cast(:power as String))) OR 
-                (:exactMatch = false AND normalizar(p.power) LIKE concat('%', normalizar(cast(:power as String)), '%'))
-              ))
-          AND (:serial IS NULL OR (
-                (:exactMatch = true AND normalizar(p.serial) = normalizar(cast(:serial as String))) OR 
-                (:exactMatch = false AND normalizar(p.serial) LIKE concat('%', normalizar(cast(:serial as String)), '%'))
-              ))
-          AND (:brand IS NULL OR (
-                (:exactMatch = true AND normalizar(p.brand) = normalizar(cast(:brand as String))) OR 
-                (:exactMatch = false AND normalizar(p.brand) LIKE concat('%', normalizar(cast(:brand as String)), '%'))
-              ))
-    """)
+    SELECT p FROM Process p 
+    WHERE (:companyId IS NULL OR normalizar(cast(p.company.id as String)) LIKE normalizar(cast(:companyId as String)))
+      AND (:companyName IS NULL OR normalizar(p.company.name) LIKE normalizar(cast(:companyName as String)))
+      AND (:mainProcess IS NULL OR normalizar(p.mainProcess) LIKE normalizar(cast(:mainProcess as String)))
+      AND (:description IS NULL OR normalizar(p.description) LIKE normalizar(cast(:description as String)))
+      AND (:power IS NULL OR normalizar(p.power) LIKE normalizar(cast(:power as String)))
+      AND (:serial IS NULL OR normalizar(p.serial) LIKE normalizar(cast(:serial as String)))
+      AND (:brand IS NULL OR normalizar(p.brand) LIKE normalizar(cast(:brand as String)))
+      AND (:location IS NULL OR normalizar(p.location) LIKE normalizar(cast(:location as String)))
+""")
     List<Process> searchApus(
-            @Param("companyId") Long companyId,
+            @Param("companyId") String companyId,
             @Param("companyName") String companyName,
-            @Param("processType") String processType,
+            @Param("mainProcess") String mainProcess,
+            @Param("description") String description,
             @Param("power") String power,
             @Param("serial") String serial,
             @Param("brand") String brand,
-            @Param("exactMatch") boolean exactMatch
+            @Param("location") String location
     );
 }

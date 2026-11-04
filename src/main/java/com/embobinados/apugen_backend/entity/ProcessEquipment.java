@@ -14,8 +14,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class ProcessEquipment {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @ManyToOne
     @JoinColumn(name = "process_service_request", nullable = false)

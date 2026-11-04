@@ -5,6 +5,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface ProcessLaborRepository extends JpaRepository<ProcessLabor, Long> {
+public interface ProcessLaborRepository extends JpaRepository<ProcessLabor, String> {
     List<ProcessLabor> findByProcessServiceRequest(String serviceRequest);
 }

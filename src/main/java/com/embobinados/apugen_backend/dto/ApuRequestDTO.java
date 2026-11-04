@@ -9,10 +9,12 @@ public class ApuRequestDTO {
     // Cabecera
     private String serviceRequest;
     private String companyId;
-    private String processType;
+    private String mainProcess;
+    private String description;
     private String power;
     private String serial;
     private String brand;
+    private String location;
 
     // Variables del proceso
     private BigDecimal itemQuantity;

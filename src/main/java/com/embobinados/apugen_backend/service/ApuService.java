@@ -4,6 +4,7 @@ import com.embobinados.apugen_backend.dto.ApuResponseDTO;
 import com.embobinados.apugen_backend.entity.*;
 import com.embobinados.apugen_backend.entity.Process;
 import com.embobinados.apugen_backend.repository.*;
+import com.embobinados.apugen_backend.utilz.StringUtilz;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,10 @@ public class ApuService {
             List<ProcessEquipment> equipments,
             List<ProcessLabor> labors
     ) {
+        if (process.getPerformance() == null || process.getPerformance().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("El rendimiento del APU debe ser mayor a cero para poder calcular los costos.");
+        }
+
         // CALCULO DE MATERIALES
         BigDecimal totalMateriales = BigDecimal.ZERO;
         for (ProcessMaterial pm : materials) {
@@ -54,6 +59,7 @@ public class ApuService {
         process.setMaterialUnitCost(materialUnitCost);
 
         // CALCULO DE EQUIPOS
+
         BigDecimal totalEquipos = BigDecimal.ZERO;
         for (ProcessEquipment pe : equipments) {
             // Ir al inventario, extraer datos y hacer el snapshot
@@ -127,29 +133,22 @@ public class ApuService {
         process.setProposedUnitPrice(calculatedUnitPrice.setScale(0, RoundingMode.HALF_UP).intValue());
 
         // GUARDAR EN LA BASE DE DATOS
-        // Guardamos la cabecera primero para que las listas tengan el ID referencial
-        Process savedProcess = processRepository.save(process);
+        // Inyectamos las listas dentro del proceso para completar la relación bidireccional
+        process.setMaterials(materials);
+        process.setEquipments(equipments);
+        process.setLabors(labors);
 
-        processMaterialRepository.saveAll(materials);
-        processEquipmentRepository.saveAll(equipments);
-        processLaborRepository.saveAll(labors);
-
-        return savedProcess;
+        // Al guardar la cabecera, Hibernate detecta las listas internas y guarda todo en cascada
+        return processRepository.save(process);
     }
 
     @Transactional
     public void deleteApu(String serviceRequest) {
-        // 1. Verificar que exista
         if (!processRepository.existsById(serviceRequest)) {
             throw new RuntimeException("No se puede eliminar: No se encontró ningún APU con la solicitud " + serviceRequest);
         }
 
-        // 2. Borrar los detalles (Snapshots) primero para liberar las llaves foráneas
-        processMaterialRepository.deleteAll(processMaterialRepository.findByProcessServiceRequest(serviceRequest));
-        processEquipmentRepository.deleteAll(processEquipmentRepository.findByProcessServiceRequest(serviceRequest));
-        processLaborRepository.deleteAll(processLaborRepository.findByProcessServiceRequest(serviceRequest));
-
-        // 3. Borrar la cabecera del proceso
+        // Al eliminar el padre, la base de datos elimina los detalles automáticamente
         processRepository.deleteById(serviceRequest);
     }
 
@@ -172,16 +171,19 @@ public class ApuService {
         return processRepository.findAll();
     }
 
-    public List<Process> searchApus(Long companyId, String companyName, String processType, String power, String serial, String brand, boolean exactMatch) {
+    public List<Process> searchApus(String companyId, String companyName, String mainProcess, String description, String power, String serial, String brand, String location, boolean exactMatch) {
 
         // Limpiamos strings vacíos para evitar falsos positivos en el IS NULL
-        companyName = (companyName != null && !companyName.trim().isEmpty()) ? companyName : null;
-        processType = (processType != null && !processType.trim().isEmpty()) ? processType : null;
-        power = (power != null && !power.trim().isEmpty()) ? power : null;
-        serial = (serial != null && !serial.trim().isEmpty()) ? serial : null;
-        brand = (brand != null && !brand.trim().isEmpty()) ? brand : null;
+        companyId = StringUtilz.prepararFiltro(companyId, exactMatch);
+        companyName = StringUtilz.prepararFiltro(companyName, exactMatch);
+        mainProcess = StringUtilz.prepararFiltro(mainProcess, exactMatch);
+        description = StringUtilz.prepararFiltro(description, exactMatch);
+        power = StringUtilz.prepararFiltro(power, exactMatch);
+        serial = StringUtilz.prepararFiltro(serial, exactMatch);
+        brand = StringUtilz.prepararFiltro(brand, exactMatch);
+        location = StringUtilz.prepararFiltro(location, exactMatch);
 
         // Si no consigue nada, Spring Data JPA devuelve [] automáticamente.
-        return processRepository.searchApus(companyId, companyName, processType, power, serial, brand, exactMatch);
+        return processRepository.searchApus(companyId, companyName, mainProcess, description, power, serial, brand, location);
     }
 }

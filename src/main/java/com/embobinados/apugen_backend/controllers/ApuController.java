@@ -1,7 +1,6 @@
 package com.embobinados.apugen_backend.controllers;
 
 import com.embobinados.apugen_backend.dto.ApuRequestDTO;
-import com.embobinados.apugen_backend.dto.ApuResponseDTO;
 import com.embobinados.apugen_backend.entity.*;
 import com.embobinados.apugen_backend.entity.Process;
 import com.embobinados.apugen_backend.service.ApuService;
@@ -26,10 +25,12 @@ public class ApuController {
         // 1. Mapear la cabecera (Process)
         Process process = new Process();
         process.setServiceRequest(dto.getServiceRequest());
-        process.setProcessType(dto.getProcessType());
+        process.setMainProcess(dto.getMainProcess());
+        process.setDescription(dto.getDescription());
         process.setPower(dto.getPower());
         process.setSerial(dto.getSerial());
         process.setBrand(dto.getBrand());
+        process.setLocation(dto.getLocation());
         process.setItemQuantity(dto.getItemQuantity());
         process.setPerformance(dto.getPerformance());
         process.setSocialLawsPercentage(dto.getSocialLawsPercentage());
@@ -86,16 +87,18 @@ public class ApuController {
 
     @GetMapping("/buscar")
     public ResponseEntity<List<Process>> buscarApus(
-            @RequestParam(required = false) Long companyId,
+            @RequestParam(required = false) String companyId,
             @RequestParam(required = false) String companyName,
-            @RequestParam(required = false) String processType,
+            @RequestParam(required = false) String mainProcess,
+            @RequestParam(required = false) String description,
             @RequestParam(required = false) String power,
             @RequestParam(required = false) String serial,
             @RequestParam(required = false) String brand,
+            @RequestParam(required = false) String location,
             @RequestParam(defaultValue = "false") boolean exactMatch) {
 
         List<Process> resultados = apuService.searchApus(
-                companyId, companyName, processType, power, serial, brand, exactMatch);
+                companyId, companyName, mainProcess, description, power, serial, brand, location, exactMatch);
 
         return ResponseEntity.ok(resultados);
     }

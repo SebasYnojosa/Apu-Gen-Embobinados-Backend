@@ -1,0 +1,1193 @@
+==> src/main/java/com/embobinados/apugen_backend/utilz/StringUtilz.java <==
+package com.embobinados.apugen_backend.utilz;
+
+public class StringUtilz {
+    public static String limpiarParametro(String valor) {
+        // Si es nulo o solo contiene espacios en blanco, retorna null.
+        // De lo contrario, retorna el texto sin espacios accidentales a los lados.
+        return (valor != null && !valor.isBlank()) ? valor.trim() : null;
+    }
+
+    public static String prepararFiltro(String valor, boolean exactMatch) {
+        if (valor == null || valor.isBlank()) return null;
+        String limpio = valor.trim();
+        return exactMatch ? limpio : "%" + limpio + "%";
+    }
+}
+
+==> src/main/java/com/embobinados/apugen_backend/repository/CompanyRepository.java <==
+package com.embobinados.apugen_backend.repository;
+
+import com.embobinados.apugen_backend.entity.Company;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface CompanyRepository extends JpaRepository<Company, String> {
+}
+==> src/main/java/com/embobinados/apugen_backend/repository/LaborRepository.java <==
+package com.embobinados.apugen_backend.repository;
+import com.embobinados.apugen_backend.entity.Labor;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface LaborRepository extends JpaRepository<Labor, String> {}
+==> src/main/java/com/embobinados/apugen_backend/repository/MaterialRepository.java <==
+package com.embobinados.apugen_backend.repository;
+import com.embobinados.apugen_backend.entity.Material;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface MaterialRepository extends JpaRepository<Material, String> {}
+==> src/main/java/com/embobinados/apugen_backend/repository/ProcessRepository.java <==
+package com.embobinados.apugen_backend.repository;
+
+import com.embobinados.apugen_backend.entity.Process;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface ProcessRepository extends JpaRepository<Process, String> {
+
+    @Query("""
+    SELECT p FROM Process p 
+    WHERE (:companyId IS NULL OR normalizar(cast(p.company.id as String)) LIKE normalizar(cast(:companyId as String)))
+      AND (:companyName IS NULL OR normalizar(p.company.name) LIKE normalizar(cast(:companyName as String)))
+      AND (:mainProcess IS NULL OR normalizar(p.mainProcess) LIKE normalizar(cast(:mainProcess as String)))
+      AND (:description IS NULL OR normalizar(p.description) LIKE normalizar(cast(:description as String)))
+      AND (:power IS NULL OR normalizar(p.power) LIKE normalizar(cast(:power as String)))
+      AND (:serial IS NULL OR normalizar(p.serial) LIKE normalizar(cast(:serial as String)))
+      AND (:brand IS NULL OR normalizar(p.brand) LIKE normalizar(cast(:brand as String)))
+      AND (:location IS NULL OR normalizar(p.location) LIKE normalizar(cast(:location as String)))
+""")
+    List<Process> searchApus(
+            @Param("companyId") String companyId,
+            @Param("companyName") String companyName,
+            @Param("mainProcess") String mainProcess,
+            @Param("description") String description,
+            @Param("power") String power,
+            @Param("serial") String serial,
+            @Param("brand") String brand,
+            @Param("location") String location
+    );
+}
+==> src/main/java/com/embobinados/apugen_backend/repository/ProcessEquipmentRepository.java <==
+package com.embobinados.apugen_backend.repository;
+import com.embobinados.apugen_backend.entity.ProcessEquipment;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface ProcessEquipmentRepository extends JpaRepository<ProcessEquipment, String> {
+    List<ProcessEquipment> findByProcessServiceRequest(String serviceRequest);
+}
+==> src/main/java/com/embobinados/apugen_backend/repository/ProcessMaterialRepository.java <==
+package com.embobinados.apugen_backend.repository;
+import com.embobinados.apugen_backend.entity.ProcessMaterial;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface ProcessMaterialRepository extends JpaRepository<ProcessMaterial, String> {
+    List<ProcessMaterial> findByProcessServiceRequest(String serviceRequest);
+}
+==> src/main/java/com/embobinados/apugen_backend/repository/ProcessLaborRepository.java <==
+package com.embobinados.apugen_backend.repository;
+import com.embobinados.apugen_backend.entity.ProcessLabor;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface ProcessLaborRepository extends JpaRepository<ProcessLabor, String> {
+    List<ProcessLabor> findByProcessServiceRequest(String serviceRequest);
+}
+==> src/main/java/com/embobinados/apugen_backend/repository/EquipmentRepository.java <==
+package com.embobinados.apugen_backend.repository;
+import com.embobinados.apugen_backend.entity.Equipment;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface EquipmentRepository extends JpaRepository<Equipment, String> {}
+==> src/main/java/com/embobinados/apugen_backend/controllers/CatalogController.java <==
+package com.embobinados.apugen_backend.controllers;
+
+import com.embobinados.apugen_backend.entity.Company;
+import com.embobinados.apugen_backend.entity.Equipment;
+import com.embobinados.apugen_backend.entity.Labor;
+import com.embobinados.apugen_backend.entity.Material;
+import com.embobinados.apugen_backend.repository.CompanyRepository;
+import com.embobinados.apugen_backend.repository.EquipmentRepository;
+import com.embobinados.apugen_backend.repository.LaborRepository;
+import com.embobinados.apugen_backend.repository.MaterialRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/catalogos")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "*") // Previene bloqueos CORS desde React
+public class CatalogController {
+
+    // Inyección de dependencias de los repositorios maestros
+    private final CompanyRepository companyRepository;
+    private final MaterialRepository materialRepository;
+    private final EquipmentRepository equipmentRepository;
+    private final LaborRepository laborRepository;
+
+
+
+    @GetMapping("/empresas")
+    public ResponseEntity<List<Company>> getCompanies() {
+        // findAll() ejecuta un "SELECT * FROM companies" automáticamente
+        return ResponseEntity.ok(companyRepository.findAll());
+    }
+
+    // @GetMapping("/empresas/{id}")
+    @GetMapping("/empresas/porId")
+    public ResponseEntity<Company> getEmpresa(
+            @RequestParam("id") String id
+    ) {
+        Company empresa = companyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No se encontró la empresa con ID: " + id));
+
+        return ResponseEntity.ok(empresa);
+    }
+
+    @PostMapping("/empresas")
+    public ResponseEntity<Company> crearEmpresa(@RequestBody Company empresa) {
+        // Validación crucial por usar IDs manuales
+        if (empresa.getId() == null) {
+            throw new RuntimeException("El ID de la empresa es obligatorio.");
+        }
+        if (companyRepository.existsById(empresa.getId())) {
+            throw new RuntimeException("Ya existe una empresa registrada con el ID: " + empresa.getId());
+        }
+        return ResponseEntity.ok(companyRepository.save(empresa));
+    }
+
+    // @PutMapping("/empresas/{id}")
+    @PutMapping("/empresas")
+    public ResponseEntity<Company> actualizarEmpresa(
+            @RequestParam("id") String id,
+            @RequestBody Company detalles)
+    {
+        Company empresa = companyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No se encontró la empresa con ID: " + id));
+
+        empresa.setName(detalles.getName());
+
+        return ResponseEntity.ok(companyRepository.save(empresa));
+    }
+
+    // @DeleteMapping("/empresas/{id}")
+    @DeleteMapping("/empresas")
+    public ResponseEntity<Void> borrarEmpresa(
+            @RequestParam("id") String id
+    ) {
+        if (!companyRepository.existsById(id)) {
+            throw new RuntimeException("No se encontró la empresa con ID: " + id);
+        }
+        try {
+            companyRepository.deleteById(id);
+        } catch (Exception e) {
+            throw new RuntimeException("No se puede borrar la empresa porque está siendo usada en un APU.");
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    // ==========================================
+    // CRUD PARA MATERIALES
+    // ==========================================
+
+    @GetMapping("/materiales")
+    public ResponseEntity<List<Material>> getMaterials() {
+        return ResponseEntity.ok(materialRepository.findAll());
+    }
+
+    // @GetMapping("/materiales/{id}")
+    @GetMapping("/materiales/porId")
+    public ResponseEntity<Material> getMaterial(
+            @RequestParam("id") String id
+    ) {
+        Material material = materialRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No se encontró el material con ID: " + id));
+
+        return ResponseEntity.ok(material);
+    }
+
+    @PostMapping("/materiales")
+    public ResponseEntity<Material> crearMaterial(@RequestBody Material material) {
+        // Validación crucial por usar IDs manuales
+        if (material.getId() == null) {
+            throw new RuntimeException("El ID del material es obligatorio.");
+        }
+        if (materialRepository.existsById(material.getId())) {
+            throw new RuntimeException("Ya existe un material registrado con el ID: " + material.getId());
+        }
+        return ResponseEntity.ok(materialRepository.save(material));
+    }
+
+    // @PutMapping("/materiales/{id}")
+    @PutMapping("/materiales")
+    public ResponseEntity<Material> actualizarMaterial(
+            @RequestParam("id") String id,
+            @RequestBody Material detalles
+    ) {
+        Material material = materialRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No se encontró el material con ID: " + id));
+
+        material.setDescription(detalles.getDescription());
+        material.setUnit(detalles.getUnit());
+        material.setBaseCost(detalles.getBaseCost());
+
+        return ResponseEntity.ok(materialRepository.save(material));
+    }
+
+    // @DeleteMapping("/materiales/{id}")
+    @DeleteMapping("/materiales")
+    public ResponseEntity<Void> borrarMaterial(
+            @RequestParam("id") String id
+    ) {
+        if (!materialRepository.existsById(id)) {
+            throw new RuntimeException("No se encontró el material con ID: " + id);
+        }
+        try {
+            materialRepository.deleteById(id);
+        } catch (Exception e) {
+            throw new RuntimeException("No se puede borrar el material porque está siendo usado en un APU.");
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    // ==========================================
+    // CRUD PARA EQUIPOS
+    // ==========================================
+
+    @GetMapping("/equipos")
+    public ResponseEntity<List<Equipment>> getEquipments() {
+        return ResponseEntity.ok(equipmentRepository.findAll());
+    }
+
+    // @GetMapping("/equipos/{id}")
+    @GetMapping("/equipos/porId")
+    public ResponseEntity<Equipment> getEquipo(
+            @RequestParam("id") String id
+    ) {
+        Equipment equipo = equipmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No se encontró el equipo con ID: " + id));
+
+        return ResponseEntity.ok(equipo);
+    }
+
+    @PostMapping("/equipos")
+    public ResponseEntity<Equipment> crearEquipo(@RequestBody Equipment equipo) {
+        // Validación crucial por usar IDs manuales
+        if (equipo.getId() == null) {
+            throw new RuntimeException("El ID del equipo es obligatorio.");
+        }
+        if (equipmentRepository.existsById(equipo.getId())) {
+            throw new RuntimeException("Ya existe un equipo registrado con el ID: " + equipo.getId());
+        }
+        return ResponseEntity.ok(equipmentRepository.save(equipo));
+    }
+
+    // @PutMapping("/equipos/{id}")
+    public ResponseEntity<Equipment> actualizarEquipo(
+            @RequestParam("id") String id,
+            @RequestBody Equipment detalles
+    ) {
+        Equipment equipo = equipmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No se encontró el equipo con ID: " + id));
+
+        equipo.setDescription(detalles.getDescription());
+        equipo.setBaseValue(detalles.getBaseValue());
+        equipo.setDepreciationFactor(detalles.getDepreciationFactor());
+
+        return ResponseEntity.ok(equipmentRepository.save(equipo));
+    }
+
+    // @DeleteMapping("/equipos/{id}")
+    @DeleteMapping("/equipos")
+    public ResponseEntity<Void> borrarEquipo(
+            @RequestParam("id") String id
+    ) {
+        if (!equipmentRepository.existsById(id)) {
+            throw new RuntimeException("No se encontró el equipo con ID: " + id);
+        }
+        try {
+            equipmentRepository.deleteById(id);
+        } catch (Exception e) {
+            throw new RuntimeException("No se puede borrar el equipo porque está siendo usado en un APU.");
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    // ==========================================
+    // CRUD PARA MANO DE OBRA (CARGOS)
+    // ==========================================
+
+    @GetMapping("/cargos")
+    public ResponseEntity<List<Labor>> getLabors() {
+        return ResponseEntity.ok(laborRepository.findAll());
+    }
+
+    // @GetMapping("/cargos/{id}")
+    @GetMapping("/cargos/porId")
+    public ResponseEntity<Labor> getCargo(
+            @RequestParam("id") String id
+    ) {
+        Labor cargo = laborRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No se encontró el cargo con ID: " + id));
+
+        return ResponseEntity.ok(cargo);
+    }
+
+    @PostMapping("/cargos")
+    public ResponseEntity<Labor> crearCargo(@RequestBody Labor cargo) {
+        // Validación crucial por usar IDs manuales
+        if (cargo.getId() == null) {
+            throw new RuntimeException("El ID del cargo es obligatorio.");
+        }
+        if (laborRepository.existsById(cargo.getId())) {
+            throw new RuntimeException("Ya existe un cargo registrado con el ID: " + cargo.getId());
+        }
+        return ResponseEntity.ok(laborRepository.save(cargo));
+    }
+
+    // @PutMapping("/cargos/{id}")
+    @PutMapping("/cargos")
+    public ResponseEntity<Labor> actualizarCargo(
+            @RequestParam("id") String id,
+            @RequestBody Labor detalles
+    ) {
+        Labor cargo = laborRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No se encontró el equipo con ID: " + id));
+
+        cargo.setDescription(detalles.getDescription());
+        cargo.setBaseDailyWage(detalles.getBaseDailyWage());
+
+        return ResponseEntity.ok(laborRepository.save(cargo));
+    }
+
+    // @DeleteMapping("/cargos/{id}")
+    @DeleteMapping("/cargos")
+    public ResponseEntity<Void> borrarCargo(
+            @RequestParam("id") String id
+    ) {
+        if (!laborRepository.existsById(id)) {
+            throw new RuntimeException("No se encontró el cargo con ID: " + id);
+        }
+        try {
+            laborRepository.deleteById(id);
+        } catch (Exception e) {
+            throw new RuntimeException("No se puede borrar el cargo porque está siendo usado en un APU.");
+        }
+        return ResponseEntity.noContent().build();
+    }
+}
+==> src/main/java/com/embobinados/apugen_backend/controllers/ApuController.java <==
+package com.embobinados.apugen_backend.controllers;
+
+import com.embobinados.apugen_backend.dto.ApuRequestDTO;
+import com.embobinados.apugen_backend.entity.*;
+import com.embobinados.apugen_backend.entity.Process;
+import com.embobinados.apugen_backend.service.ApuService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/apus")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "*") // Permite que el frontend en React (puerto 5173) se comunique sin bloqueos CORS
+public class ApuController {
+
+    private final ApuService apuService;
+
+    @PostMapping("/generar")
+    public ResponseEntity<Process> generarApu(@RequestBody ApuRequestDTO dto) {
+
+        // 1. Mapear la cabecera (Process)
+        Process process = new Process();
+        process.setServiceRequest(dto.getServiceRequest());
+        process.setMainProcess(dto.getMainProcess());
+        process.setDescription(dto.getDescription());
+        process.setPower(dto.getPower());
+        process.setSerial(dto.getSerial());
+        process.setBrand(dto.getBrand());
+        process.setLocation(dto.getLocation());
+        process.setItemQuantity(dto.getItemQuantity());
+        process.setPerformance(dto.getPerformance());
+        process.setSocialLawsPercentage(dto.getSocialLawsPercentage());
+        process.setAdminPercentage(dto.getAdminPercentage());
+        process.setUtilityContingencyPercentage(dto.getUtilityContingencyPercentage());
+
+        // Truco JPA: Para guardar relaciones, solo necesitamos instanciar la entidad con su ID
+        Company company = new Company();
+        company.setId(dto.getCompanyId());
+        process.setCompany(company);
+
+        // 2. Mapear la lista de Materiales
+        List<ProcessMaterial> materials = dto.getMaterials().stream().map(mDto -> {
+            ProcessMaterial pm = new ProcessMaterial();
+            Material material = new Material();
+            material.setId(mDto.getMaterialId());
+            pm.setMaterial(material);
+            pm.setQuantity(mDto.getQuantity());
+            return pm;
+        }).collect(Collectors.toList());
+
+        // 3. Mapear la lista de Equipos
+        List<ProcessEquipment> equipments = dto.getEquipments().stream().map(eDto -> {
+            ProcessEquipment pe = new ProcessEquipment();
+            Equipment equipment = new Equipment();
+            equipment.setId(eDto.getEquipmentId());
+            pe.setEquipment(equipment);
+            pe.setQuantity(eDto.getQuantity());
+            return pe;
+        }).collect(Collectors.toList());
+
+        // 4. Mapear la lista de Mano de Obra
+        List<ProcessLabor> labors = dto.getLabors().stream().map(lDto -> {
+            ProcessLabor pl = new ProcessLabor();
+            Labor labor = new Labor();
+            labor.setId(lDto.getLaborId());
+            pl.setLabor(labor);
+            pl.setDotation(lDto.getDotation());
+            return pl;
+        }).collect(Collectors.toList());
+
+        // 5. Ejecutar el cálculo y guardar
+        Process savedProcess = apuService.calcAndSaveApu(process, materials, equipments, labors);
+
+        // Devolvemos el APU calculado y guardado con un código HTTP 200 (OK)
+        return ResponseEntity.ok(savedProcess);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Process>> listarTodosLosApus() {
+        List<Process> apus = apuService.getAllApus();
+        return ResponseEntity.ok(apus);
+    }
+
+    @GetMapping("/buscar")
+    public ResponseEntity<List<Process>> buscarApus(
+            @RequestParam(required = false) String companyId,
+            @RequestParam(required = false) String companyName,
+            @RequestParam(required = false) String mainProcess,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String power,
+            @RequestParam(required = false) String serial,
+            @RequestParam(required = false) String brand,
+            @RequestParam(required = false) String location,
+            @RequestParam(defaultValue = "false") boolean exactMatch) {
+
+        List<Process> resultados = apuService.searchApus(
+                companyId, companyName, mainProcess, description, power, serial, brand, location, exactMatch);
+
+        return ResponseEntity.ok(resultados);
+    }
+
+    // @DeleteMapping("/{serviceRequest}")
+    @DeleteMapping
+    public ResponseEntity<Void> eliminarApu(
+            @RequestParam("serviceRequest") String serviceRequest
+    ) {
+        apuService.deleteApu(serviceRequest);
+        return ResponseEntity.noContent().build();
+    }
+}
+==> src/main/java/com/embobinados/apugen_backend/ApugenBackendApplication.java <==
+package com.embobinados.apugen_backend;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class ApugenBackendApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(ApugenBackendApplication.class, args);
+	}
+
+}
+
+==> src/main/java/com/embobinados/apugen_backend/exception/GlobalExceptionHandler.java <==
+package com.embobinados.apugen_backend.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.time.LocalDateTime;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    // Usamos un 'record' de Java 21 para definir la estructura del JSON de error
+    public record ErrorResponse(
+            LocalDateTime timestamp,
+            int status,
+            String error,
+            String message
+    ) {}
+
+    // Intercepta las RuntimeException (las que lanzamos en el ApuService)
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
+
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "Error en la Petición",
+                ex.getMessage() // Aquí inyectará "Material no encontrado", etc.
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+}
+==> src/main/java/com/embobinados/apugen_backend/config/CustomFunctionContributor.java <==
+package com.embobinados.apugen_backend.config;
+
+import org.hibernate.boot.model.FunctionContributions;
+import org.hibernate.boot.model.FunctionContributor;
+import org.hibernate.type.StandardBasicTypes;
+
+public class CustomFunctionContributor implements FunctionContributor {
+
+    @Override
+    public void contributeFunctions(FunctionContributions functionContributions) {
+        functionContributions.getFunctionRegistry()
+                .registerPattern(
+                        "normalizar",
+                        "unaccent(lower(?1))",
+                        functionContributions.getTypeConfiguration()
+                                .getBasicTypeRegistry()
+                                .resolve(StandardBasicTypes.STRING)
+                );
+    }
+}
+==> src/main/java/com/embobinados/apugen_backend/config/CorsConfig.java <==
+package com.embobinados.apugen_backend.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class CorsConfig implements WebMvcConfigurer {
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:5173") // Puerto por defecto de Vite/React
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*");
+    }
+}
+==> src/main/java/com/embobinados/apugen_backend/entity/ProcessLabor.java <==
+package com.embobinados.apugen_backend.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "process_labors")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProcessLabor {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    @ManyToOne
+    @JoinColumn(name = "process_service_request", nullable = false)
+    @JsonIgnore // Para que no salga toda la informacion del proceso en las responses
+    private Process process;
+
+    // Referencia al catálogo maestro
+    @ManyToOne
+    @JoinColumn(name = "labor_id", nullable = false)
+    private Labor labor;
+
+    // Fotografía (Snapshot)
+    @Column(nullable = false, length = 255)
+    private String descriptionSnapshot;
+
+    @Column(name = "daily_wage_applied", precision = 12, scale = 2, nullable = false)
+    private BigDecimal dailyWageApplied;
+
+    // Variables del proceso
+    @Column(precision = 5, scale = 2, nullable = false)
+    private BigDecimal dotation; // Porcentaje (Ej: 1.00 para 100%)
+
+    @Column(name = "daily_cost", precision = 12, scale = 2, nullable = false)
+    private BigDecimal dailyCost; // dailyWageApplied * dotation
+}
+==> src/main/java/com/embobinados/apugen_backend/entity/Equipment.java <==
+package com.embobinados.apugen_backend.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "equipments")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Equipment {
+    @Id
+    private String id; // ID Manual
+
+    @Column(nullable = false, length = 255)
+    private String description;
+
+    @Column(name = "base_value", precision = 12, scale = 2, nullable = false)
+    private BigDecimal baseValue;
+
+    // Precisión de 5 decimales solicitada
+    @Column(name = "depreciation_factor", precision = 12, scale = 5, nullable = false)
+    private BigDecimal depreciationFactor;
+}
+==> src/main/java/com/embobinados/apugen_backend/entity/Process.java <==
+package com.embobinados.apugen_backend.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
+import java.util.List;
+
+@Entity
+@Table(name = "processes")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Process {
+    @Id
+    @Column(name = "service_request", length = 20)
+    private String serviceRequest; // ID Manual (Solicitud de Servicio)
+
+    @ManyToOne
+    @JoinColumn(name = "company_id", nullable = false)
+    private Company company;
+
+    @Column(name = "main_process", nullable = false, length = 100)
+    private String mainProcess;
+
+    @Column(nullable = false, length = 100)
+    private String description;
+
+    @Column(length = 50)
+    private String power;
+
+    @Column(length = 100)
+    private String serial;
+
+    @Column(length = 100)
+    private String brand;
+
+    @Column(length = 100)
+    private String location;
+
+    // --- VARIABLES DEL APU (Atributos del Proceso) ---
+    @Column(name = "item_quantity", precision = 12, scale = 2)
+    private BigDecimal itemQuantity; // Cantidad de veces que se realizará el item
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal performance; // Rendimiento del item
+
+    @Column(name = "social_laws_percentage", precision = 5, scale = 2)
+    private BigDecimal socialLawsPercentage; // Porcentaje Leyes Sociales (Ej: 0.75 para 75%)
+
+    @Column(name = "admin_percentage", precision = 5, scale = 2)
+    private BigDecimal adminPercentage; // Porcentaje Administración
+
+    @Column(name = "utility_contingency_percentage", precision = 5, scale = 2)
+    private BigDecimal utilityContingencyPercentage; // Porcentaje Utilidad e Imprevistos
+
+    // --- TOTALES CALCULADOS (Se guardan para congelar el presupuesto) ---
+    @Column(name = "material_unit_cost", precision = 12, scale = 2)
+    private BigDecimal materialUnitCost; // Costo Unitario de Materiales
+
+    @Column(name = "equipment_unit_cost", precision = 12, scale = 2)
+    private BigDecimal equipmentUnitCost; // Costo Unitario de Equipos
+
+    @Column(name = "labor_unit_cost", precision = 12, scale = 2)
+    private BigDecimal laborUnitCost; // Costo Unitario de Mano de Obra
+
+    @Column(name = "direct_unit_cost", precision = 14, scale = 2)
+    private BigDecimal directUnitCost; // Sumatoria de los 3 anteriores
+
+    @Column(name = "admin_cost_value", precision = 14, scale = 2)
+    private BigDecimal adminCostValue; // directUnitCost * adminPercentage
+
+    @Column(name = "total_unit_cost", precision = 14, scale = 2)
+    private BigDecimal totalUnitCost; // directUnitCost + adminCostValue
+
+    @Column(name = "utility_cost_value", precision = 14, scale = 2)
+    private BigDecimal utilityCostValue; // totalUnitCost * utilityContingencyPercentage
+
+    @Column(name = "calculated_unit_price", precision = 14, scale = 2)
+    private BigDecimal calculatedUnitPrice; // totalUnitCost + utilityCostValue
+
+    // El precio propuesto debe ser entero según la regla
+    @Column(name = "proposed_unit_price")
+    private Integer proposedUnitPrice;
+
+    // --- RELACIONES EN CASCADA (Solución al TransientPropertyValueException) ---
+    @OneToMany(mappedBy = "process", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProcessMaterial> materials;
+
+    @OneToMany(mappedBy = "process", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProcessEquipment> equipments;
+
+    @OneToMany(mappedBy = "process", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProcessLabor> labors;
+}
+==> src/main/java/com/embobinados/apugen_backend/entity/ProcessMaterial.java <==
+package com.embobinados.apugen_backend.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "process_materials")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProcessMaterial {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    @ManyToOne
+    @JoinColumn(name = "process_service_request", nullable = false)
+    @JsonIgnore // Para que no salga toda la informacion del proceso en las responses
+    private Process process;
+
+    // Referencia al catálogo maestro
+    @ManyToOne
+    @JoinColumn(name = "material_id", nullable = false)
+    private Material material;
+
+    // Fotografía (Snapshot) de los datos al momento de crear el APU
+    @Column(nullable = false, length = 255)
+    private String descriptionSnapshot;
+
+    @Column(length = 20)
+    private String unitSnapshot;
+
+    @Column(precision = 12, scale = 2, nullable = false)
+    private BigDecimal costApplied; // El costo que se usó (puede ser el base o uno modificado por el cliente)
+
+    // Variables del proceso
+    @Column(precision = 12, scale = 2, nullable = false)
+    private BigDecimal quantity;
+
+    @Column(precision = 12, scale = 2, nullable = false)
+    private BigDecimal amount; // quantity * costApplied
+}
+==> src/main/java/com/embobinados/apugen_backend/entity/Material.java <==
+package com.embobinados.apugen_backend.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "materials")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Material {
+    @Id
+    private String id; // ID Manual
+
+    @Column(nullable = false, length = 255)
+    private String description;
+
+    @Column(length = 20)
+    private String unit;
+
+    @Column(name = "base_cost", precision = 12, scale = 2, nullable = false)
+    private BigDecimal baseCost;
+}
+==> src/main/java/com/embobinados/apugen_backend/entity/Labor.java <==
+package com.embobinados.apugen_backend.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "labors")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Labor {
+    @Id
+    private String id; // ID Manual
+
+    @Column(nullable = false, length = 255)
+    private String description; // Ej: "Técnico Embobinador Principal"
+
+    @Column(name = "base_daily_wage", precision = 12, scale = 2, nullable = false)
+    private BigDecimal baseDailyWage;
+}
+==> src/main/java/com/embobinados/apugen_backend/entity/Company.java <==
+package com.embobinados.apugen_backend.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "companies")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Company {
+    @Id
+    private String id; // ID Manual
+
+    @Column(nullable = false, length = 255)
+    private String name;
+}
+==> src/main/java/com/embobinados/apugen_backend/entity/ProcessEquipment.java <==
+package com.embobinados.apugen_backend.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "process_equipments")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProcessEquipment {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    @ManyToOne
+    @JoinColumn(name = "process_service_request", nullable = false)
+    @JsonIgnore // Para que no salga toda la informacion del proceso en las responses
+    private Process process;
+
+    // Referencia al catálogo maestro
+    @ManyToOne
+    @JoinColumn(name = "equipment_id", nullable = false)
+    private Equipment equipment;
+
+    // Fotografía (Snapshot)
+    @Column(nullable = false, length = 255)
+    private String descriptionSnapshot;
+
+    @Column(precision = 12, scale = 2, nullable = false)
+    private BigDecimal valueApplied;
+
+    @Column(name = "depreciation_factor_applied", precision = 12, scale = 5, nullable = false)
+    private BigDecimal depreciationFactorApplied;
+
+    // Variables del proceso
+    @Column(precision = 12, scale = 2, nullable = false)
+    private BigDecimal quantity;
+
+    @Column(name = "daily_use_cost", precision = 12, scale = 2, nullable = false)
+    private BigDecimal dailyUseCost; // valueApplied * depreciationFactorApplied
+}
+==> src/main/java/com/embobinados/apugen_backend/dto/ApuResponseDTO.java <==
+package com.embobinados.apugen_backend.dto;
+
+import com.embobinados.apugen_backend.entity.Process;
+import com.embobinados.apugen_backend.entity.ProcessEquipment;
+import com.embobinados.apugen_backend.entity.ProcessLabor;
+import com.embobinados.apugen_backend.entity.ProcessMaterial;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+public class ApuResponseDTO {
+    private Process process;
+    private List<ProcessMaterial> materials;
+    private List<ProcessEquipment> equipments;
+    private List<ProcessLabor> labors;
+}
+==> src/main/java/com/embobinados/apugen_backend/dto/ApuRequestDTO.java <==
+package com.embobinados.apugen_backend.dto;
+
+import lombok.Data;
+import java.math.BigDecimal;
+import java.util.List;
+
+@Data
+public class ApuRequestDTO {
+    // Cabecera
+    private String serviceRequest;
+    private String companyId;
+    private String mainProcess;
+    private String description;
+    private String power;
+    private String serial;
+    private String brand;
+    private String location;
+
+    // Variables del proceso
+    private BigDecimal itemQuantity;
+    private BigDecimal performance;
+    private BigDecimal socialLawsPercentage;
+    private BigDecimal adminPercentage;
+    private BigDecimal utilityContingencyPercentage;
+
+    // Listas de detalles
+    private List<MaterialDTO> materials;
+    private List<EquipmentDTO> equipments;
+    private List<LaborDTO> labors;
+
+    // Clases anidadas para estructurar las listas del JSON
+    @Data
+    public static class MaterialDTO {
+        private String materialId;
+        private BigDecimal quantity;
+    }
+
+    @Data
+    public static class EquipmentDTO {
+        private String equipmentId;
+        private BigDecimal quantity;
+    }
+
+    @Data
+    public static class LaborDTO {
+        private String laborId;
+        private BigDecimal dotation;
+    }
+}
+
+==> src/main/java/com/embobinados/apugen_backend/service/ApuService.java <==
+package com.embobinados.apugen_backend.service;
+
+import com.embobinados.apugen_backend.dto.ApuResponseDTO;
+import com.embobinados.apugen_backend.entity.*;
+import com.embobinados.apugen_backend.entity.Process;
+import com.embobinados.apugen_backend.repository.*;
+import com.embobinados.apugen_backend.utilz.StringUtilz;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class ApuService {
+    private final ProcessRepository processRepository;
+    private final MaterialRepository materialRepository;
+    private final EquipmentRepository equipmentRepository;
+    private final LaborRepository laborRepository;
+    private final ProcessMaterialRepository processMaterialRepository;
+    private final ProcessEquipmentRepository processEquipmentRepository;
+    private final ProcessLaborRepository processLaborRepository;
+
+    @Transactional
+    public Process calcAndSaveApu(
+            Process process,
+            List<ProcessMaterial> materials,
+            List<ProcessEquipment> equipments,
+            List<ProcessLabor> labors
+    ) {
+        // CALCULO DE MATERIALES
+        BigDecimal totalMateriales = BigDecimal.ZERO;
+        for (ProcessMaterial pm : materials) {
+            // Ir al catalogo, extraer datos y hacer el snapshot
+            Material catMat = materialRepository.findById(pm.getMaterial().getId())
+                    .orElseThrow(() -> new RuntimeException("Material no encontrado"));
+
+            pm.setDescriptionSnapshot(catMat.getDescription());
+            pm.setUnitSnapshot(catMat.getUnit());
+            pm.setCostApplied(catMat.getBaseCost());
+
+            // monto = costo * cantidad
+            BigDecimal amount = pm.getCostApplied().multiply(pm.getQuantity()).setScale(2, RoundingMode.HALF_UP);
+            pm.setAmount(amount);
+            pm.setProcess(process);
+
+            totalMateriales = totalMateriales.add(amount);
+        }
+
+        //costo_unitario_materiales = total_materiales * cantidad_item
+        BigDecimal materialUnitCost = totalMateriales.multiply(process.getItemQuantity()).setScale(2, RoundingMode.HALF_UP);
+        process.setMaterialUnitCost(materialUnitCost);
+
+        // CALCULO DE EQUIPOS
+        BigDecimal totalEquipos = BigDecimal.ZERO;
+        for (ProcessEquipment pe : equipments) {
+            // Ir al inventario, extraer datos y hacer el snapshot
+            Equipment catEq = equipmentRepository.findById(pe.getEquipment().getId())
+                    .orElseThrow(() -> new RuntimeException("Equipo no encontrado"));
+
+            pe.setDescriptionSnapshot(catEq.getDescription());
+            pe.setValueApplied(catEq.getBaseValue());
+            pe.setDepreciationFactorApplied(catEq.getDepreciationFactor()); // Se mantiene con 5 decimales
+
+            // costo_uso_diario = valor * factor_depreciacion
+            BigDecimal dailyUseCost = pe.getValueApplied().multiply(pe.getDepreciationFactorApplied().setScale(6, RoundingMode.HALF_UP));
+            pe.setDailyUseCost(dailyUseCost);
+            pe.setProcess(process);
+
+            totalEquipos = totalEquipos.add(dailyUseCost);
+        }
+
+        // costo_unitario_equipos = total_equipos / rendimiento
+        BigDecimal equipmentUnitCost = totalEquipos.divide(process.getPerformance(), 2, RoundingMode.HALF_UP);
+        process.setEquipmentUnitCost(equipmentUnitCost);
+
+        // CALCULO DE MANO DE OBRA
+        BigDecimal totalEnMano = BigDecimal.ZERO;
+        for (ProcessLabor pl : labors) {
+            Labor catLab = laborRepository.findById(pl.getLabor().getId())
+                    .orElseThrow(() -> new RuntimeException("Mano de Obra no encontrada"));
+
+            pl.setDescriptionSnapshot(catLab.getDescription());
+            pl.setDailyWageApplied(catLab.getBaseDailyWage());
+
+            // costo_diario = salario * dotacion
+            BigDecimal dailyCost = pl.getDailyWageApplied().multiply(pl.getDotation()).setScale(2, RoundingMode.HALF_UP);
+            pl.setDailyCost(dailyCost);
+            pl.setProcess(process);
+
+            totalEnMano = totalEnMano.add(dailyCost);
+        }
+
+        // costo_por_leyes_sociales = total_en_mano * socialLawsPercentage
+        BigDecimal costoLeyesSociales = totalEnMano.multiply(process.getSocialLawsPercentage());
+        // costo_diario_personal = total_en_mano + costo_por_leyes_sociales
+        BigDecimal costoDiarioPersonal = totalEnMano.add(costoLeyesSociales);
+
+        // costo_unitario_mano_obra = costo_diario_personal / rendimiento
+        BigDecimal laborUnitCost = costoDiarioPersonal.divide(process.getPerformance(), 2, RoundingMode.HALF_UP);
+        process.setLaborUnitCost(laborUnitCost );
+
+        // TOTALES GENERALES DEL PROCESO
+        // costo_unitario_directo = sumatoria de las 3 listas
+        BigDecimal directUnitCost = materialUnitCost.add(equipmentUnitCost).add(laborUnitCost);
+        process.setDirectUnitCost(directUnitCost);
+
+        // admin_cost_value = directUnitCost * adminPercentage
+        BigDecimal adminCostValue = directUnitCost.multiply(process.getAdminPercentage()).setScale(2, RoundingMode.HALF_UP);
+        process.setAdminCostValue(adminCostValue);
+
+        // totalUnitCost = directUnitCost + adminCostValue
+        BigDecimal totalUnitCost = directUnitCost.add(adminCostValue);
+        process.setTotalUnitCost(totalUnitCost);
+
+        // utilityCostValue = totalUnitCost * utilityContingencyPercentage
+        BigDecimal utilityCostValue = totalUnitCost.multiply(process.getUtilityContingencyPercentage()).setScale(2, RoundingMode.HALF_UP);
+        process.setUtilityCostValue(utilityCostValue);
+
+        // calculatedUnitPrice = totalUnitCost + utilityCostValue
+        BigDecimal calculatedUnitPrice = totalUnitCost.add(utilityCostValue);
+        process.setCalculatedUnitPrice(calculatedUnitPrice);
+
+        // precio_unitario_propuesto (entero)
+        process.setProposedUnitPrice(calculatedUnitPrice.setScale(0, RoundingMode.HALF_UP).intValue());
+
+        // GUARDAR EN LA BASE DE DATOS
+        // Inyectamos las listas dentro del proceso para completar la relación bidireccional
+        process.setMaterials(materials);
+        process.setEquipments(equipments);
+        process.setLabors(labors);
+
+        // Al guardar la cabecera, Hibernate detecta las listas internas y guarda todo en cascada
+        return processRepository.save(process);
+    }
+
+    @Transactional
+    public void deleteApu(String serviceRequest) {
+        if (!processRepository.existsById(serviceRequest)) {
+            throw new RuntimeException("No se puede eliminar: No se encontró ningún APU con la solicitud " + serviceRequest);
+        }
+
+        // Al eliminar el padre, la base de datos elimina los detalles automáticamente
+        processRepository.deleteById(serviceRequest);
+    }
+
+    public ApuResponseDTO getApuByServiceRequest(String serviceRequest) {
+        // 1. Buscar la cabecera principal
+        Process process = processRepository.findById(serviceRequest)
+                .orElseThrow(() -> new RuntimeException("No se encontró ningún APU con la solicitud: " + serviceRequest));
+
+        // 2. Buscar las 3 listas usando los métodos que acabamos de crear
+        List<ProcessMaterial> materials = processMaterialRepository.findByProcessServiceRequest(serviceRequest);
+        List<ProcessEquipment> equipments = processEquipmentRepository.findByProcessServiceRequest(serviceRequest);
+        List<ProcessLabor> labors = processLaborRepository.findByProcessServiceRequest(serviceRequest);
+
+        // 3. Empaquetar la informacion en el DTO y devolverlo
+        return new ApuResponseDTO(process, materials, equipments, labors);
+    }
+
+    public List<Process> getAllApus() {
+        // findAll() busca todas las cabeceras de la tabla 'processes'
+        return processRepository.findAll();
+    }
+
+    public List<Process> searchApus(String companyId, String companyName, String mainProcess, String description, String power, String serial, String brand, String location, boolean exactMatch) {
+
+        // Limpiamos strings vacíos para evitar falsos positivos en el IS NULL
+        companyId = StringUtilz.prepararFiltro(companyId, exactMatch);
+        companyName = StringUtilz.prepararFiltro(companyName, exactMatch);
+        mainProcess = StringUtilz.prepararFiltro(mainProcess, exactMatch);
+        description = StringUtilz.prepararFiltro(description, exactMatch);
+        power = StringUtilz.prepararFiltro(power, exactMatch);
+        serial = StringUtilz.prepararFiltro(serial, exactMatch);
+        brand = StringUtilz.prepararFiltro(brand, exactMatch);
+        location = StringUtilz.prepararFiltro(location, exactMatch);
+
+        // Si no consigue nada, Spring Data JPA devuelve [] automáticamente.
+        return processRepository.searchApus(companyId, companyName, mainProcess, description, power, serial, brand, location);
+    }
+}
