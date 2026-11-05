@@ -1040,6 +1040,10 @@ public class ApuService {
             List<ProcessEquipment> equipments,
             List<ProcessLabor> labors
     ) {
+        if (process.getPerformance() == null || process.getPerformance().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("El rendimiento del APU debe ser mayor a cero para poder calcular los costos.");
+        }
+
         // CALCULO DE MATERIALES
         BigDecimal totalMateriales = BigDecimal.ZERO;
         for (ProcessMaterial pm : materials) {
@@ -1064,6 +1068,7 @@ public class ApuService {
         process.setMaterialUnitCost(materialUnitCost);
 
         // CALCULO DE EQUIPOS
+
         BigDecimal totalEquipos = BigDecimal.ZERO;
         for (ProcessEquipment pe : equipments) {
             // Ir al inventario, extraer datos y hacer el snapshot

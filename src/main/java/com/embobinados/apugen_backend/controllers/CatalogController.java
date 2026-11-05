@@ -8,6 +8,7 @@ import com.embobinados.apugen_backend.repository.CompanyRepository;
 import com.embobinados.apugen_backend.repository.EquipmentRepository;
 import com.embobinados.apugen_backend.repository.LaborRepository;
 import com.embobinados.apugen_backend.repository.MaterialRepository;
+import com.embobinados.apugen_backend.utilz.StringUtilz;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,6 +44,19 @@ public class CatalogController {
                 .orElseThrow(() -> new RuntimeException("No se encontró la empresa con ID: " + id));
 
         return ResponseEntity.ok(empresa);
+    }
+
+    @GetMapping("/empresas/porNombre")
+    public ResponseEntity<List<Company>> getEmpresasPorNombre(
+            @RequestParam("nombre") String nombre
+    ) {
+        String palabraBusqueda = StringUtilz.prepararFiltro(nombre, false);
+
+        if (palabraBusqueda == null) {
+            return ResponseEntity.ok(companyRepository.findAll());
+        }
+
+        return ResponseEntity.ok(companyRepository.buscarPorNombre(palabraBusqueda));
     }
 
     @PostMapping("/empresas")
@@ -107,6 +121,17 @@ public class CatalogController {
         return ResponseEntity.ok(material);
     }
 
+    @GetMapping("/materiales/porDescripcion")
+    public ResponseEntity<List<Material>> buscarMaterialesPorDescripcion(
+            @RequestParam("descripcion") String descripcion
+    ) {
+        String filtro = StringUtilz.prepararFiltro(descripcion, false);
+        if (filtro == null) {
+            return ResponseEntity.ok(materialRepository.findAll());
+        }
+        return ResponseEntity.ok(materialRepository.buscarPorDescripcion(filtro));
+    }
+
     @PostMapping("/materiales")
     public ResponseEntity<Material> crearMaterial(@RequestBody Material material) {
         // Validación crucial por usar IDs manuales
@@ -169,6 +194,17 @@ public class CatalogController {
                 .orElseThrow(() -> new RuntimeException("No se encontró el equipo con ID: " + id));
 
         return ResponseEntity.ok(equipo);
+    }
+
+    @GetMapping("/equipos/porDescripcion")
+    public ResponseEntity<List<Equipment>> buscarEquiposPorDescripcion(
+            @RequestParam("descripcion") String descripcion
+    ) {
+        String filtro = StringUtilz.prepararFiltro(descripcion, false);
+        if (filtro == null) {
+            return ResponseEntity.ok(equipmentRepository.findAll());
+        }
+        return ResponseEntity.ok(equipmentRepository.buscarPorDescripcion(filtro));
     }
 
     @PostMapping("/equipos")
